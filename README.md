@@ -16,9 +16,23 @@ Before the first Central publication, clone the eight Java repositories next to 
 bash ../Stellar-Enclosure-Parent/scripts/bootstrap-workspace.sh \
   --workspace "$(cd .. && pwd)" \
   --local-repository "$HOME/.m2/repository"
+
+# Resolve subsequent Maven commands and generator subprocesses from this same cache.
+export MAVEN_ARGS="${MAVEN_ARGS:-} -Dmaven.repo.local=$HOME/.m2/repository"
 ```
 
 The bootstrap installs parent/BOM models before building components and business starters in Maven reactor order. It compiles test sources and installs packages with runtime tests disabled. It never runs applications, databases, containers, browsers, or deploy.
+
+## Application delivery (no package publication)
+
+This repository contains only the Yaoguang Admin application. Neither its aggregator POM nor the executable application is published to Maven Central or npm. Both inherit `maven.deploy.skip=true`, which the Central plugin also honors.
+
+```bash
+# Produce the deployable application without starting it.
+./mvnw -B -ntp -DskipITs -Dinvoker.skip=true clean package
+```
+
+Deliver `stellar-enclosure-yaoguang-admin/target/stellar-enclosure-yaoguang-admin-exec.jar` through your application deployment process. Unit tests remain enabled. Prerequisite libraries must be published or installed by the Build section's bootstrap.
 
 ## Compatibility and publication
 

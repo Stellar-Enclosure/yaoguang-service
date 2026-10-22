@@ -13,6 +13,10 @@
     <url>https://github.com/Stellar-Enclosure/yaoguang-service</url>
     <name>stellar-enclosure-yaoguang</name>
     <description>Enterprise knowledge base and Wiki platform for Stellar Enclosure.</description>
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <modules>
         <module>stellar-enclosure-yaoguang-admin</module>
     </modules>
