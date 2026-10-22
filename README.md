@@ -1,6 +1,24 @@
 # yaoguang-service
 
-Stellar Enclosure Java modules. All first-party modules start at **0.0.1**.
+Knowledge-base and Wiki backend for Stellar Enclosure's Yaoguang platform. All first-party modules start at **0.0.1**.
+
+## Current capabilities
+
+| Area | Function |
+|---|---|
+| Knowledge bases | Create/update knowledge bases, configure chat/embedding models and local/cloud egress policy, and manage READER/EDITOR/OWNER membership within the tenant boundary. |
+| Documents | Upload source material, track document revisions, parse/chunk/embed through ingestion jobs, delete documents and request reindexing. |
+| Retrieval and answers | Support keyword, vector and hybrid search over authorized active document chunks; return answers with citations and DOCUMENTS/WIKI/BOTH evidence scope. |
+| Background jobs | Query ingestion and Wiki-generation jobs, inspect status/stage and retry eligible failures. |
+| Wiki | Generate pages from source evidence, edit drafts, publish revisions, inspect the page relationship graph and unpublish pages with authorization checks. |
+
+## Code and integration
+
+The only Maven application module is [stellar-enclosure-yaoguang-admin](stellar-enclosure-yaoguang-admin/). Its `knowledge` package owns knowledge bases, membership, ingestion, jobs and retrieval; `wiki` owns page/revision workflows; `auth` and `support` provide management authentication and infrastructure. [yaoguang-web](https://github.com/Stellar-Enclosure/yaoguang-web) owns the independent browser workspace.
+
+Authentication bootstrap is `GET /api/v1/yaoguang/auth/bootstrap`. The existing knowledge and Wiki business APIs retain the `/api/v1/yuheng/admin` prefix and `yuheng:knowledge:*` capabilities for compatibility; ownership moved to Yaoguang without renaming those contracts. Browser access uses the Yuheng Edge `edge-yaoguang` registration, Shoubing identity and Jianshen authorization. Model calls use the configured model integration; LLM channel/model gateway administration remains in [yuheng-service](https://github.com/Stellar-Enclosure/yuheng-service).
+
+Document/query embeddings stay local without a cloud fallback; generation follows the configured egress policy. The current code covers the knowledge/Wiki workspace within the broader data-governance platform roadmap. It does not establish delivery of a general BI, ETL or data-warehouse platform. Building the Admin JAR does not verify external databases, indexes, model endpoints or end-to-end ingestion.
 
 ## Build
 
