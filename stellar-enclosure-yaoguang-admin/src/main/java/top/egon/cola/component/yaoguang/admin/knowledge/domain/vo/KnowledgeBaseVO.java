@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.vo;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,55 +38,121 @@ import top.egon.cola.component.yaoguang.admin.knowledge.domain.enums.KnowledgeMe
 public class KnowledgeBaseVO {
 
     /** 服务端 Snowflake 十进制字符串 / server-assigned decimal string id. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.id", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.id",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Pattern(regexp = "^[1-9][0-9]{0,19}$")
     private String id;
 
     /** 展示名称 / trimmed display name. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.name", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.name",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Size(max = 128)
     private String name;
 
     /** 描述，0–2000 字符，可空字符串但不可 null / description, empty allowed but never null. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.description", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.description",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     @Size(max = 2_000)
     private String description;
 
     /** 创建时可信身份派生的 owner，不接受 body 自报 / owner derived from the trusted identity at creation. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.ownerActorId", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.ownerActorId",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Size(max = 128)
     private String ownerActorId;
 
     /** 当前主体在 KB 中的角色 / current subject role inside this KB. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.myRole", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.myRole",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     private KnowledgeMemberRoleEnum myRole;
 
     /** 生成上下文出域策略 / egress policy for generated context. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.egressPolicy", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.egressPolicy",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     private KnowledgeEgressPolicyEnum egressPolicy;
 
     /** 允许的 CHAT alias / allowed CHAT alias. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.chatModel", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.chatModel",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Size(max = 64)
     private String chatModel;
 
     /** EMBEDDING alias / embedding alias. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.embeddingModel", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.embeddingModel",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Size(max = 64)
     private String embeddingModel;
 
     /** 创建时冻结的不可变嵌入空间标识 / embedding space identity frozen at creation. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.embeddingSpaceId", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.embeddingSpaceId",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Size(max = 128)
     private String embeddingSpaceId;
 
     /** 冻结的正维度 D，不随模型默认变化 / frozen positive dimension. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.dimensions", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.dimensions",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     @Min(1)
     @Max(16_000)
     private Integer dimensions;
 
     /** 已提交乐观版本，正整数 / committed optimistic revision, positive. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseVO.revision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.revision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     @Min(1)
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)

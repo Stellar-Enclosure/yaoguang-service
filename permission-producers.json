@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "producers": [
+    {
+      "producerId": "yaoguang-java",
+      "module": "stellar-enclosure-yaoguang-admin",
+      "artifactFile": "stellar-enclosure-yaoguang-admin-exec.jar"
+    }
+  ]
+}

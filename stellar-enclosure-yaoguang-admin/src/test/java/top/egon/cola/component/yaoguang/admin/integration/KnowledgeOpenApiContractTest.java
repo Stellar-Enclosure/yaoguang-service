@@ -1,5 +1,7 @@
 package top.egon.cola.component.yaoguang.admin.integration;
 
+import top.egon.cola.component.yaoguang.admin.shared.converter.KnowledgePermissionProjectionConverter;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -146,7 +148,7 @@ class KnowledgeOpenApiContractTest {
             WikiPageVO.class, LlmChannelVO.class, LlmModelVO.class);
 
     /** LLM 网关原生入口的合同来源 / where the native LLM entry-point contract is read from. */
-    private static final Path LLM_ENTRY_CONTROLLER = Path.of("..", "..", "stellar-enclosure-yuheng").resolve("stellar-enclosure-yuheng-llm-gateway")
+    private static final Path LLM_ENTRY_CONTROLLER = Path.of("..", "..", "yuheng-service").resolve("stellar-enclosure-yuheng-llm-gateway")
             .resolve("src/main/java/top/egon/cola/component/yuheng/llm/proxy/controller/LlmApiController.java");
 
     private final KnowledgeService knowledgeService = mock(KnowledgeService.class);
@@ -235,11 +237,11 @@ class KnowledgeOpenApiContractTest {
             assertThat(controller.getAnnotation(EgonApiCatalog.class))
                     .as("catalog for %s", controller.getSimpleName())
                     .isNotNull()
-                    .satisfies(catalog -> assertThat(catalog.interfaceGroupCode()).isEqualTo(controller == LlmConfigurationController.class ? "stellar-enclosure-yuheng-admin" : "stellar-enclosure-yaoguang-admin"));
+                    .satisfies(catalog -> assertThat(catalog.interfaceGroupCode()).isEqualTo(controller == LlmConfigurationController.class ? "yuheng-admin" : "yaoguang-admin"));
             assertThat(controller.getAnnotation(Tag.class))
                     .as("tag for %s", controller.getSimpleName())
                     .isNotNull()
-                    .satisfies(tag -> assertThat(tag.name()).isEqualTo(controller == LlmConfigurationController.class ? "stellar-enclosure-yuheng-admin" : "stellar-enclosure-yaoguang-admin"));
+                    .satisfies(tag -> assertThat(tag.name()).isEqualTo(controller == LlmConfigurationController.class ? "yuheng-admin" : "yaoguang-admin"));
             assertThat(controller.getAnnotation(RestController.class))
                     .as("rest controller for %s", controller.getSimpleName())
                     .isNotNull();
@@ -283,34 +285,34 @@ class KnowledgeOpenApiContractTest {
     @DisplayName("读操作继承类级能力，写操作逐个收紧，替换类管理操作单独要求 knowledge:admin")
     void requiredCapabilitiesNarrowFromTheClassLevelReadToPerOperationWriteAndAdmin() {
         assertThat(effectiveCapabilities("listKnowledgeBases"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:read", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:read");
         assertThat(effectiveCapabilities("listKnowledgeDocuments"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:read", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:read");
         assertThat(effectiveCapabilities("getWikiGraph"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:read", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:read");
         assertThat(effectiveCapabilities("listLlmChannels"))
                 .containsExactlyInAnyOrder("yuheng:llm:read", "*");
         assertThat(effectiveCapabilities("listLlmModelConfigurations"))
                 .containsExactlyInAnyOrder("yuheng:llm:read", "*");
         assertThat(effectiveCapabilities("createKnowledgeAnswer"))
                 .as("grounded answering stays read-scoped")
-                .containsExactlyInAnyOrder("yuheng:knowledge:read", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:read");
         assertThat(effectiveCapabilities("createKnowledgeBase"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:write", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:write");
         assertThat(effectiveCapabilities("uploadKnowledgeDocument"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:write", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:write");
         assertThat(effectiveCapabilities("deleteKnowledgeDocument"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:write", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:write");
         assertThat(effectiveCapabilities("publishWikiRevision"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:write", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:write");
         assertThat(effectiveCapabilities("replaceLlmChannel"))
                 .containsExactlyInAnyOrder("yuheng:llm:write", "*");
         assertThat(effectiveCapabilities("replaceLlmModel"))
                 .containsExactlyInAnyOrder("yuheng:llm:write", "*");
         assertThat(effectiveCapabilities("replaceKnowledgeBase"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:admin", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:admin");
         assertThat(effectiveCapabilities("replaceKnowledgeMembers"))
-                .containsExactlyInAnyOrder("yuheng:knowledge:admin", "*");
+                .containsExactlyInAnyOrder("yuheng:knowledge:admin");
     }
 
     @Test
@@ -494,7 +496,7 @@ class KnowledgeOpenApiContractTest {
                 .andExpect(status().isAccepted())
                 .andExpect(locationAt(ADMIN_BASE + "/knowledge-jobs/9101"));
 
-        mockMvc(new KnowledgeJobController(knowledgeJobService))
+        mockMvc(new KnowledgeJobController(new KnowledgePermissionProjectionConverter(), knowledgeJobService))
                 .perform(post(ADMIN_BASE + "/knowledge-jobs/9101/retries")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Idempotency-Key", "retry-1")
@@ -502,7 +504,7 @@ class KnowledgeOpenApiContractTest {
                 .andExpect(status().isAccepted())
                 .andExpect(locationAt(ADMIN_BASE + "/knowledge-jobs/9102"));
 
-        mockMvc(new WikiController(wikiService))
+        mockMvc(new WikiController(new KnowledgePermissionProjectionConverter(), wikiService))
                 .perform(post(ADMIN_BASE + "/knowledge-bases/7001/wiki/generation-jobs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Idempotency-Key", "wiki-1")
@@ -548,7 +550,7 @@ class KnowledgeOpenApiContractTest {
                 .andExpect(status().isNoContent())
                 .andExpect(result -> assertThat(result.getResponse().getContentAsString()).isEmpty());
 
-        mockMvc(new WikiController(wikiService))
+        mockMvc(new WikiController(new KnowledgePermissionProjectionConverter(), wikiService))
                 .perform(delete(ADMIN_BASE + "/knowledge-bases/7001/wiki/pages/9001/publications/current")
                         .param("expectedRevision", "4"))
                 .andExpect(status().isNoContent())
@@ -714,11 +716,12 @@ class KnowledgeOpenApiContractTest {
     }
 
     private KnowledgeController knowledgeController() {
-        return new KnowledgeController(knowledgeService, new KnowledgeMembersConverter());
+        return new KnowledgeController(new KnowledgePermissionProjectionConverter(), knowledgeService, new KnowledgeMembersConverter());
     }
 
     private KnowledgeDocumentController knowledgeDocumentController() {
-        return new KnowledgeDocumentController(knowledgeService, new KnowledgeUploadReceiptConverter());
+        return new KnowledgeDocumentController(new KnowledgePermissionProjectionConverter(), knowledgeService, new KnowledgeUploadReceiptConverter(),
+                org.mockito.Mockito.mock(top.egon.cola.platform.tianquan.jianshen.starter.field.PermissionFieldBindingGuard.class));
     }
 
     /** 中文说明：控制器刻意按当前部署上下文拼装绝对 {@code Location}，本测试固定的是合同路径本身加上部署主机；

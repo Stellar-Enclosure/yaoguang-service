@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -34,6 +40,12 @@ import lombok.experimental.Accessors;
 public class KnowledgeRetryCommandDTO {
 
     /** 必须等于原作业当前 revision 的正整数，不符返回 409 / must equal the predecessor revision, a positive integer, and a mismatch yields 409. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeRetryCommandDTO.expectedRevision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.expectedRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @NotNull
     @Min(1)
     private Long expectedRevision;

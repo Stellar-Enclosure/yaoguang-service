@@ -114,7 +114,7 @@ public class WikiServiceImpl implements WikiService {
 
     /** 中文说明：API-031 额外要求的功能能力：下线是公开面收缩，必须同时持有知识写能力与库内 EDITOR。 English summary: API-031's extra capability: withdrawing a publication needs the knowledge write authority as well as EDITOR on the base. */
     private static final Set<String> KNOWLEDGE_WRITE_AUTHORITIES =
-            Set.of("CAP_yuheng:knowledge:write", "CAP_*");
+            Set.of("CAP_yuheng:knowledge:write");
 
     /** 中文说明：可读角色集合。/ the roles allowed to read. */
     private static final Set<KnowledgeMemberRoleEnum> READER_OR_ABOVE =

@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -36,11 +42,23 @@ import lombok.experimental.Accessors;
 public class KnowledgeReindexCommandDTO {
 
     /** 重新摄取的来源版本十进制 ID，缺失即使用当前 active revision / source revision id for the reingest, absent meaning the current active revision. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeReindexCommandDTO.sourceRevisionId", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.sourceRevisionId",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @Schema(nullable = true)
     @Pattern(regexp = "^[1-9][0-9]{0,19}$")
     private String sourceRevisionId;
 
     /** 必须等于资料当前 revision 的正整数，不符返回 409 / must equal the document revision, a positive integer, and a mismatch yields 409. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeReindexCommandDTO.expectedRevision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.expectedRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @NotNull
     @Min(1)
     private Long expectedRevision;

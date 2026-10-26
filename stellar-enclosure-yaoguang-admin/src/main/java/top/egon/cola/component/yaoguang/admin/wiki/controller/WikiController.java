@@ -1,5 +1,17 @@
 package top.egon.cola.component.yaoguang.admin.wiki.controller;
 
+import top.egon.cola.component.yaoguang.admin.shared.converter.KnowledgePermissionProjectionConverter;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeJobWrittenVO;
+import top.egon.cola.component.yaoguang.admin.wiki.domain.dto.WikiDraftWriteCommandDTO;
+import top.egon.cola.component.yaoguang.admin.wiki.domain.vo.WikiPageReadVO;
+import top.egon.cola.component.yaoguang.admin.wiki.domain.vo.WikiPageWrittenVO;
+
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.RequiresPermissions;
+import top.egon.cola.component.yaoguang.admin.permission.YaoguangPermissionCodes;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -68,7 +80,7 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
 @Validated
 @RestController("wikiController")
 @RequestMapping("/api/v1/yuheng/admin")
-@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read','CAP_*'))")
+@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read'))")
 @Tag(name = "yaoguang-admin")
 @EgonApiCatalog(
         businessDomainCode = "xingyuan",
@@ -78,6 +90,8 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
         interfaceGroupCode = "yaoguang-admin")
 @RequiredArgsConstructor
 public class WikiController {
+
+    private final KnowledgePermissionProjectionConverter permissionProjections;
 
     /** 作业轮询绝对路径前缀，仅用于 202 的 {@code Location}，与 API-019 的映射保持一致 / the job polling path prefix used only for the 202 {@code Location}, aligned with the API-019 mapping. */
     private static final String KNOWLEDGE_JOB_PATH = "/api/v1/yuheng/admin/knowledge-jobs/";
@@ -125,8 +139,13 @@ public class WikiController {
     @Operation(operationId = "listWikiPages")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.wiki.listWikiPages", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.listWikiPages",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/wiki/pages")
-    public KnowledgePageVO<WikiPageVO> listWikiPages(
+    public KnowledgePageVO<WikiPageReadVO> listWikiPages(
             AdminActor actor,
             @PathVariable
             @NotBlank
@@ -136,11 +155,11 @@ public class WikiController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "false") boolean includeDraft) {
-        return wikiService.listPages(
+        return permissionProjections.readWikiPages(wikiService.listPages(
                 actor,
                 kbId,
                 pageQuery(page, size, search, tag, includeDraft)
-        );
+        ));
     }
 
     /**
@@ -164,9 +183,14 @@ public class WikiController {
     @Operation(operationId = "createWikiGenerationJob")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    @PermissionResource(key = "yaoguang.api.wiki.createWikiGenerationJob", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.createWikiGenerationJob",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PostMapping("/knowledge-bases/{kbId}/wiki/generation-jobs")
-    public ResponseEntity<KnowledgeJobVO> createWikiGenerationJob(
+    public ResponseEntity<KnowledgeJobWrittenVO> createWikiGenerationJob(
             AdminActor actor,
             @PathVariable
             @NotBlank
@@ -177,7 +201,7 @@ public class WikiController {
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .location(jobLocation(job.getId()))
                 .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
-                .body(job);
+                .body(permissionProjections.writtenJob(job));
     }
 
     /**
@@ -197,8 +221,13 @@ public class WikiController {
     @Operation(operationId = "getWikiPage")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.wiki.getWikiPage", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.getWikiPage",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/wiki/pages/{pageId}")
-    public WikiPageVO getWikiPage(
+    public WikiPageReadVO getWikiPage(
             AdminActor actor,
             @PathVariable
             @NotBlank
@@ -208,7 +237,7 @@ public class WikiController {
             @Pattern(regexp = "^[1-9][0-9]{0,19}$") String pageId,
             @RequestParam(required = false)
             @Pattern(regexp = "^[1-9][0-9]{0,19}$") String revisionId) {
-        return wikiService.getPage(actor, kbId, pageId, revisionId);
+        return permissionProjections.readWiki(wikiService.getPage(actor, kbId, pageId, revisionId));
     }
 
     /**
@@ -230,9 +259,14 @@ public class WikiController {
     @Operation(operationId = "replaceWikiDraft")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    @PermissionResource(key = "yaoguang.api.wiki.replaceWikiDraft", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.replaceWikiDraft",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PutMapping("/knowledge-bases/{kbId}/wiki/pages/{pageId}/draft")
-    public WikiPageVO replaceWikiDraft(
+    public WikiPageWrittenVO replaceWikiDraft(
             AdminActor actor,
             @PathVariable
             @NotBlank
@@ -240,8 +274,8 @@ public class WikiController {
             @PathVariable
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$") String pageId,
-            @RequestBody @Valid WikiDraftCommandDTO command) {
-        return wikiService.replaceDraft(actor, kbId, pageId, command);
+            @RequestBody @Valid WikiDraftWriteCommandDTO command) {
+        return permissionProjections.writtenWiki(wikiService.replaceDraft(actor, kbId, pageId, permissionProjections.draftCommand(command)));
     }
 
     /**
@@ -265,9 +299,14 @@ public class WikiController {
     @Operation(operationId = "publishWikiRevision")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    @PermissionResource(key = "yaoguang.api.wiki.publishWikiRevision", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.publishWikiRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PostMapping("/knowledge-bases/{kbId}/wiki/pages/{pageId}/publications")
-    public WikiPageVO publishWikiRevision(
+    public WikiPageWrittenVO publishWikiRevision(
             AdminActor actor,
             @PathVariable
             @NotBlank
@@ -276,7 +315,7 @@ public class WikiController {
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$") String pageId,
             @RequestBody @Valid WikiPublicationCommandDTO command) {
-        return wikiService.publishRevision(actor, kbId, pageId, command);
+        return permissionProjections.writtenWiki(wikiService.publishRevision(actor, kbId, pageId, command));
     }
 
     /**
@@ -296,6 +335,11 @@ public class WikiController {
     @Operation(operationId = "getWikiGraph")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.wiki.getWikiGraph", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.getWikiGraph",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/wiki/graph")
     public WikiGraphVO getWikiGraph(
             AdminActor actor,
@@ -328,7 +372,12 @@ public class WikiController {
     @Operation(operationId = "unpublishWikiPage")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    @PermissionResource(key = "yaoguang.api.wiki.unpublishWikiPage", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.wiki.unpublishWikiPage",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @DeleteMapping("/knowledge-bases/{kbId}/wiki/pages/{pageId}/publications/current")
     public ResponseEntity<Void> unpublishWikiPage(
             AdminActor actor,

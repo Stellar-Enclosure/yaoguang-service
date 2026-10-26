@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.wiki.domain.vo;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,18 +39,36 @@ import java.util.List;
 public class WikiGraphVO {
 
     /** 授权发布页面图节点，最多 100 / at most 100 authorized published page nodes. */
+    @PermissionResource(key = "yaoguang.field.WikiGraphVO.nodes", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.nodes",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.ARRAY,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     @Size(max = 100)
     @Valid
     private List<WikiGraphNodeVO> nodes;
 
     /** 可见节点之间一跳链接，最多 200 / at most 200 one-hop links between visible nodes. */
+    @PermissionResource(key = "yaoguang.field.WikiGraphVO.edges", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.edges",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.ARRAY,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     @Size(max = 200)
     @Valid
     private List<WikiGraphEdgeVO> edges;
 
     /** 达到图输出上限时 true / true when the graph output hit its limits. */
+    @PermissionResource(key = "yaoguang.field.WikiGraphVO.truncated", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.truncated",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.BOOLEAN,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     private Boolean truncated;
 
@@ -96,11 +120,23 @@ public class WikiGraphVO {
     public static class WikiGraphNodeVO {
 
         /** 页面稳定 ID / page id. */
+        @PermissionResource(key = "yaoguang.field.WikiGraphVO.WikiGraphNodeVO.id", type = ResourceType.FIELD,
+                labelPage = "yaoguang.permissions", labelKey = "field.id",
+                allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+                oauthScopes = "yuheng:knowledge:read")
+        @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+                plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
         @NotBlank
         @Pattern(regexp = "^[1-9][0-9]{0,19}$")
         private String id;
 
         /** 页面标题 1–128 / page title. */
+        @PermissionResource(key = "yaoguang.field.WikiGraphVO.WikiGraphNodeVO.title", type = ResourceType.FIELD,
+                labelPage = "yaoguang.permissions", labelKey = "field.title",
+                allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+                oauthScopes = "yuheng:knowledge:read")
+        @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+                plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
         @NotBlank
         @Size(max = 128)
         private String title;
@@ -120,11 +156,23 @@ public class WikiGraphVO {
     public static class WikiGraphEdgeVO {
 
         /** 起点页面稳定 ID / source page id. */
+        @PermissionResource(key = "yaoguang.field.WikiGraphVO.WikiGraphEdgeVO.source", type = ResourceType.FIELD,
+                labelPage = "yaoguang.permissions", labelKey = "field.source",
+                allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+                oauthScopes = "yuheng:knowledge:read")
+        @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+                plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
         @NotBlank
         @Pattern(regexp = "^[1-9][0-9]{0,19}$")
         private String source;
 
         /** 终点页面稳定 ID / target page id. */
+        @PermissionResource(key = "yaoguang.field.WikiGraphVO.WikiGraphEdgeVO.target", type = ResourceType.FIELD,
+                labelPage = "yaoguang.permissions", labelKey = "field.target",
+                allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+                oauthScopes = "yuheng:knowledge:read")
+        @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+                plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
         @NotBlank
         @Pattern(regexp = "^[1-9][0-9]{0,19}$")
         private String target;

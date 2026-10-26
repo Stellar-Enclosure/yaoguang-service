@@ -18,6 +18,8 @@ The only Maven application module is [stellar-enclosure-yaoguang-admin](stellar-
 
 Authentication bootstrap is `GET /api/v1/yaoguang/auth/bootstrap`. The existing knowledge and Wiki business APIs retain the `/api/v1/yuheng/admin` prefix and `yuheng:knowledge:*` capabilities for compatibility; ownership moved to Yaoguang without renaming those contracts. Browser access uses the Yuheng Edge `edge-yaoguang` registration, Shoubing identity and Jianshen authorization. Model calls use the configured model integration; LLM channel/model gateway administration remains in [yuheng-service](https://github.com/Stellar-Enclosure/yuheng-service).
 
+The standard producer, FIELD execution and trusted catalog bindings are documented in [permission producer and runtime boundary](docs/permission-producer.md).
+
 Document/query embeddings stay local without a cloud fallback; generation follows the configured egress policy. The current code covers the knowledge/Wiki workspace within the broader data-governance platform roadmap. It does not establish delivery of a general BI, ETL or data-warehouse platform. Building the Admin JAR does not verify external databases, indexes, model endpoints or end-to-end ingestion.
 
 ## Build
@@ -46,16 +48,23 @@ The bootstrap installs parent/BOM models before building components and business
 This repository contains only the Yaoguang Admin application. Neither its aggregator POM nor the executable application is published to Maven Central or npm. Both inherit `maven.deploy.skip=true`, which the Central plugin also honors.
 
 ```bash
-# Produce the deployable application without starting it.
-./mvnw -B -ntp -DskipITs -Dinvoker.skip=true clean package
+# Produce the permission-bearing application without starting it.
+./mvnw -B -ntp -Ppermission-producer \
+  -Dpermission.commit="$PERMISSION_COMMIT" \
+  -Dpermission.buildId="$PERMISSION_BUILD_ID" \
+  -DskipITs -Dinvoker.skip=true clean package
 ```
 
 Deliver `stellar-enclosure-yaoguang-admin/target/stellar-enclosure-yaoguang-admin-exec.jar` through your application deployment process. Unit tests remain enabled. Prerequisite libraries must be published or installed by the Build section's bootstrap.
 
 ## Compatibility and publication
 
-Java packages/classes, Bean names, configuration keys, OAuth/RPC identities, APIs, and database ownership are retained. Existing SQL and DDL history are copied byte for byte. Artifact/build versions and necessary build paths change. A successful build does not imply application startup or live infrastructure acceptance.
+Business APIs, OAuth identities and database ownership are retained. The permission rollout adds operation-specific transport DTOs without changing their JSON shape and replaces the retired identity/authorization Redis settings with fixed SQL-authority and catalog-runtime bindings. Existing SQL and DDL history are copied byte for byte. Artifact/build versions and necessary build paths change. A successful build does not imply application startup or live infrastructure acceptance.
 
 Git pushes run validation only. Central and npm publication are separate user actions. CI defaults to initial source bootstrap; after publication set `STELLAR_USE_SOURCE_BOOTSTRAP=false` to consume published artifacts directly. Private organizations may supply the Actions secret `STELLAR_ENCLOSURE_READ_TOKEN` with repository read access.
 
 Original MIT/LGPL licenses and author attribution are preserved.
+
+### Permission manifest delivery
+
+The `permission-producer` profile exports and verifies each final executable independently. See [permission build and controlled delivery](docs/permission-ci.md) for the exact toolchain pin, offline CI, candidate registration and deployment-qualified activation gates. Runtime startup and administrator grants are not CI side effects.

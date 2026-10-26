@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.auth.controller;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.RequiresPermissions;
+import top.egon.cola.component.yaoguang.admin.permission.YaoguangPermissionCodes;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import top.egon.cola.component.yuheng.openapi.annotation.EgonApiCatalog;
@@ -60,6 +66,10 @@ public class GatewayAuthBootstrapController {
     @Operation(operationId = "admin.yaoguangAuthBootstrapController.bootstrap")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.gatewayAuthBootstrap.bootstrap", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.gatewayAuthBootstrap.bootstrap",
+            allowedPrincipals = PermissionManifest.PrincipalType.USER)
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/bootstrap")
     @RequiresPermission("yuheng:knowledge:read")
     public AuthorizationBootstrapView bootstrap() {

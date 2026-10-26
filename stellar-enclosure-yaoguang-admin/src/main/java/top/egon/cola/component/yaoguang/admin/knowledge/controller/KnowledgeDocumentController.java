@@ -1,5 +1,21 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.controller;
 
+import top.egon.cola.component.yaoguang.admin.shared.converter.KnowledgePermissionProjectionConverter;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeJobWrittenVO;
+
+import top.egon.cola.platform.tianquan.jianshen.starter.field.PermissionFieldBindingGuard;
+import top.egon.cola.platform.tianquan.jianshen.starter.field.SubmittedFieldSet;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import java.util.Set;
+import java.util.LinkedHashSet;
+
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.RequiresPermissions;
+import top.egon.cola.component.yaoguang.admin.permission.YaoguangPermissionCodes;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -82,7 +98,7 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
 @Validated
 @RestController("knowledgeDocumentController")
 @RequestMapping("/api/v1/yuheng/admin")
-@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read','CAP_*'))")
+@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read'))")
 @Tag(name = "yaoguang-admin")
 @EgonApiCatalog(
         businessDomainCode = "xingyuan",
@@ -92,6 +108,8 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
         interfaceGroupCode = "yaoguang-admin")
 @RequiredArgsConstructor
 public class KnowledgeDocumentController {
+
+    private final KnowledgePermissionProjectionConverter permissionProjections;
 
     /** 作业轮询绝对路径前缀，仅用于 202 的 {@code Location}，与 API-019 的映射保持一致 / the job polling path prefix used only for the 202 {@code Location}, aligned with the API-019 mapping. */
     private static final String KNOWLEDGE_JOB_PATH = "/api/v1/yuheng/admin/knowledge-jobs/";
@@ -113,6 +131,8 @@ public class KnowledgeDocumentController {
 
     @Qualifier("knowledgeUploadReceiptConverter")
     private final KnowledgeUploadReceiptConverter knowledgeUploadReceiptConverter;
+
+    private final PermissionFieldBindingGuard permissionFields;
 
     /**
      * 中文说明：执行 listKnowledgeDocuments 操作（API-014）；READER 及以上可见，仅 {@code page}、{@code size}
@@ -136,6 +156,11 @@ public class KnowledgeDocumentController {
     @Operation(operationId = "listKnowledgeDocuments")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledgeDocument.listKnowledgeDocuments", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeDocument.listKnowledgeDocuments",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/documents")
     public KnowledgePageVO<KnowledgeDocumentVO> listKnowledgeDocuments(
             @NotBlank
@@ -182,8 +207,13 @@ public class KnowledgeDocumentController {
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL,
             idempotency = EgonGatewayPolicy.Idempotency.TRUE)
+    @PermissionResource(key = "yaoguang.api.knowledgeDocument.uploadKnowledgeDocument", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeDocument.uploadKnowledgeDocument",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PostMapping(value = "/knowledge-bases/{kbId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
     public ResponseEntity<KnowledgeUploadReceiptVO> uploadKnowledgeDocument(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
@@ -198,7 +228,19 @@ public class KnowledgeDocumentController {
             @RequestPart(value = "expectedRevision", required = false) String expectedRevision,
             AdminActor actor,
             @RequestHeader(value = "Idempotency-Key",
-                    required = true) String idempotencyKey) throws IOException {
+                    required = true) String idempotencyKey,
+            MultipartHttpServletRequest request) throws IOException, jakarta.servlet.ServletException {
+        Set<String> parts = new LinkedHashSet<>(request.getMultiFileMap().keySet());
+        parts.addAll(request.getParameterMap().keySet());
+        for (jakarta.servlet.http.Part part : request.getParts()) parts.add(part.getName());
+        if (!Set.of("file", "documentId", "expectedRevision").containsAll(parts)) {
+            throw new AuthorizationDeniedException("FIELD_BINDING_UNDECLARED");
+        }
+        Set<String> submitted = new LinkedHashSet<>(Set.of("fileName", "mediaType", "content"));
+        if (parts.contains("documentId")) submitted.add("documentId");
+        if (parts.contains("expectedRevision")) submitted.add("expectedRevision");
+        permissionFields.require(KnowledgeUploadCommandDTO.class, new SubmittedFieldSet(submitted),
+                Set.of("fileName", "mediaType", "content", "documentId", "expectedRevision"));
         KnowledgeUploadCommandDTO command = new KnowledgeUploadCommandDTO()
                 .setFileName(file.getOriginalFilename())
                 .setMediaType(file.getContentType())
@@ -256,6 +298,11 @@ public class KnowledgeDocumentController {
     @Operation(operationId = "getKnowledgeDocumentRevision")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledgeDocument.getKnowledgeDocumentRevision", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeDocument.getKnowledgeDocumentRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/documents/{documentId}/revisions/{revisionId}")
     public KnowledgeDocumentRevisionVO getKnowledgeDocumentRevision(
             @NotBlank
@@ -302,8 +349,13 @@ public class KnowledgeDocumentController {
     @Operation(operationId = "deleteKnowledgeDocument")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledgeDocument.deleteKnowledgeDocument", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeDocument.deleteKnowledgeDocument",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @DeleteMapping("/knowledge-bases/{kbId}/documents/{documentId}")
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
     public ResponseEntity<Void> deleteKnowledgeDocument(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
@@ -360,9 +412,14 @@ public class KnowledgeDocumentController {
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL,
             idempotency = EgonGatewayPolicy.Idempotency.TRUE)
+    @PermissionResource(key = "yaoguang.api.knowledgeDocument.createKnowledgeReindexJob", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeDocument.createKnowledgeReindexJob",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PostMapping("/knowledge-bases/{kbId}/documents/{documentId}/reindex-jobs")
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
-    public ResponseEntity<KnowledgeJobVO> createKnowledgeReindexJob(
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    public ResponseEntity<KnowledgeJobWrittenVO> createKnowledgeReindexJob(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
             @PathVariable String kbId,
@@ -385,7 +442,7 @@ public class KnowledgeDocumentController {
                 view.getType(),
                 view.getStatus()
         );
-        return accepted(view.getId(), view);
+        return accepted(view.getId(), permissionProjections.writtenJob(view));
     }
 
     /**

@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.vo;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,21 +38,45 @@ import java.util.List;
 public class KnowledgeAnswerVO {
 
     /** ANSWERED 或 NO_EVIDENCE / ANSWERED or NO_EVIDENCE. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerVO.outcome", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.outcome",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Pattern(regexp = "^(ANSWERED|NO_EVIDENCE)$")
     private String outcome;
 
     /** 回答文本，无证据时为固定说明 / answer text, fixed statement without evidence. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerVO.answer", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.answer",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     private String answer;
 
     /** 已验证引用，无证据时为空数组 / verified citations, empty array when none. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerVO.citations", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.citations",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.ARRAY,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     @Size(max = 20)
     @Valid
     private List<KnowledgeCitationVO> citations;
 
     /** 客户端稳定 alias / client-facing stable model alias. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerVO.model", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.model",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotBlank
     @Size(max = 64)
     private String model;

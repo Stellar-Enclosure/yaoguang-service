@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -30,22 +36,46 @@ import lombok.experimental.Accessors;
 public class KnowledgeAnswerCommandDTO {
 
     /** 用户问题 1–8000 字符 / user question, 1–8000 characters. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerCommandDTO.question", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.question",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:read"}))
     @NotBlank
     @Size(max = 8_000)
     private String question;
 
     /** DOCUMENTS/WIKI/BOTH，仍仅在当前 KB 内取证 / optional source scope. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerCommandDTO.sourceMode", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.sourceMode",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:read"}))
     @Schema(nullable = true)
     @Pattern(regexp = "^(DOCUMENTS|WIKI|BOTH)$")
     private String sourceMode;
 
     /** 返回证据数 1–20，缺省由服务端决定 / optional evidence count. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerCommandDTO.topK", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.topK",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:read"}))
     @Schema(nullable = true)
     @Min(1)
     @Max(20)
     private Integer topK;
 
     /** VECTOR/KEYWORD/HYBRID，缺省由服务端决定 / optional search mode. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeAnswerCommandDTO.searchMode", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.searchMode",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:read"}))
     @Schema(nullable = true)
     @Pattern(regexp = "^(VECTOR|KEYWORD|HYBRID)$")
     private String searchMode;

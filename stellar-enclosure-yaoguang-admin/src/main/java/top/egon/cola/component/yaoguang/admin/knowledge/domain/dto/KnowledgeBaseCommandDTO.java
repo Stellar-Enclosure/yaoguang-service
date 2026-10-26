@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,30 +38,66 @@ import top.egon.cola.component.yaoguang.admin.shared.domain.validation.UpdateGro
 public class KnowledgeBaseCommandDTO {
 
     /** 展示名称，trim 后 1–128 字符 / trimmed display name. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseCommandDTO.name", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.name",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:admin"))
     @NotBlank(groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     @Size(max = 128, groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     private String name;
 
     /** 描述，0–2000 字符，可空不可 null / description, empty allowed but never null. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseCommandDTO.description", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.description",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:admin"))
     @NotNull(groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     @Size(max = 2_000, groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     private String description;
 
     /** 生成上下文出域策略，embedding 始终 LOCAL / egress policy for generated context. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseCommandDTO.egressPolicy", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.egressPolicy",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:admin"))
     @NotNull(groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     private KnowledgeEgressPolicyEnum egressPolicy;
 
     /** 允许的 CHAT alias，命令时服务端复核 / allowed CHAT alias, revalidated on command. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseCommandDTO.chatModel", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.chatModel",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:admin"))
     @NotBlank(groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     @Size(max = 64, groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     private String chatModel;
 
     /** EMBEDDING alias，已有索引时不得原地改变空间 / embedding alias, immutable space once indexed. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseCommandDTO.embeddingModel", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.embeddingModel",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:admin"))
     @NotBlank(groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     @Size(max = 64, groups = {Default.class, CreateGroup.class, UpdateGroup.class})
     private String embeddingModel;
 
     /** 创建不传；替换须等于当前 revision，正整数 / absent on create, current revision on replace. */
+    @PermissionResource(key = "yaoguang.field.KnowledgeBaseCommandDTO.expectedRevision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.expectedRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = "yuheng:knowledge:admin"))
     @Min(value = 0, groups = {Default.class, UpdateGroup.class})
     @NotNull(groups = UpdateGroup.class)
     private Long expectedRevision;

@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.wiki.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -32,16 +38,34 @@ import java.util.List;
 public class WikiGenerationCommandDTO {
 
     /** 同 KB、active 且可读的来源版本 ID，1–20 / 1–20 same-KB active readable source revision ids. */
+    @PermissionResource(key = "yaoguang.field.WikiGenerationCommandDTO.sourceRevisionIds", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.sourceRevisionIds",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.ARRAY,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @NotNull
     @Size(min = 1, max = 20)
     private List<@Pattern(regexp = "^[1-9][0-9]{0,19}$") String> sourceRevisionIds;
 
     /** 目标页面稳定 ID，为空表示新建页面 / target page id, null creates a new page. */
+    @PermissionResource(key = "yaoguang.field.WikiGenerationCommandDTO.pageId", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.pageId",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @Schema(nullable = true)
     @Pattern(regexp = "^[1-9][0-9]{0,19}$")
     private String pageId;
 
     /** 新建页面为 0，追加时在既有页面上等于当前 revision / 0 for a new page, current revision otherwise. */
+    @PermissionResource(key = "yaoguang.field.WikiGenerationCommandDTO.expectedRevision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.expectedRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @NotNull
     @Min(0)
     private Long expectedRevision;

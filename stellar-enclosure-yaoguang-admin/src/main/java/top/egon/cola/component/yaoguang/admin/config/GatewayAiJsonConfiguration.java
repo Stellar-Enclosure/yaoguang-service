@@ -30,6 +30,12 @@ import java.util.List;
 @Configuration(proxyBeanMethods = false)
 public class GatewayAiJsonConfiguration implements WebMvcConfigurer {
 
+    private final top.egon.cola.platform.tianquan.jianshen.starter.field.PermissionJsonMapperFactory permissionFields;
+
+    public GatewayAiJsonConfiguration(top.egon.cola.platform.tianquan.jianshen.starter.field.PermissionJsonMapperFactory permissionFields) {
+        this.permissionFields = java.util.Objects.requireNonNull(permissionFields, "permissionFields");
+    }
+
     /**
      * The new AI carriers whose request binding rejects unknown properties, so
      * a caller cannot smuggle a server-derived field such as a review status.
@@ -39,6 +45,11 @@ public class GatewayAiJsonConfiguration implements WebMvcConfigurer {
      */
     private static final List<Class<?>> AI_CARRIER_TYPES = List.of(
             KnowledgeBaseCommandDTO.class,
+            top.egon.cola.component.yaoguang.admin.knowledge.domain.dto.KnowledgeBaseCreateCommandDTO.class,
+            top.egon.cola.component.yaoguang.admin.knowledge.domain.dto.KnowledgeMembersReplaceCommandDTO.class,
+            top.egon.cola.component.yaoguang.admin.knowledge.domain.dto.KnowledgeMemberWriteDTO.class,
+            top.egon.cola.component.yaoguang.admin.wiki.domain.dto.WikiDraftWriteCommandDTO.class,
+            top.egon.cola.component.yaoguang.admin.wiki.domain.dto.WikiSourceWriteDTO.class,
             KnowledgeMemberDTO.class,
             KnowledgeUploadCommandDTO.class,
             KnowledgeAnswerCommandDTO.class,
@@ -77,6 +88,7 @@ public class GatewayAiJsonConfiguration implements WebMvcConfigurer {
             MappingJackson2HttpMessageConverter converter) {
         // Fail closed: strict binding is a validation control, so a converter
         // without its main mapper must break startup instead of being skipped.
+        converter.setObjectMapper(permissionFields.forTransport(converter.getObjectMapper()));
         ObjectMapper strictMapper = converter.getObjectMapper().copy();
         strictMapper.configure(
                 DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,

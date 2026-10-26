@@ -32,9 +32,16 @@ class KnowledgeCarrierContractTest {
     @Test
     void knowledgeJsonStillRejectsServerDerivedFieldsWithoutChangingGlobalMapper() {
         var converter = new MappingJackson2HttpMessageConverter();
+        var originalMapper = converter.getObjectMapper();
         var converters = new ArrayList<org.springframework.http.converter.HttpMessageConverter<?>>();
         converters.add(converter);
-        new GatewayAiJsonConfiguration().extendMessageConverters(converters);
+        new GatewayAiJsonConfiguration(new top.egon.cola.platform.tianquan.jianshen.starter.field.PermissionJsonMapperFactory(
+                new top.egon.cola.platform.tianquan.jianshen.starter.security.CurrentRbac3User(),
+                top.egon.cola.component.common.desensitize.strategy.SensitiveStrategyRegistry.defaults(),
+                org.mockito.Mockito.mock(top.egon.cola.platform.tianquan.jianshen.starter.permission.PermissionPolicyRegistry.class),
+                org.mockito.Mockito.mock(top.egon.cola.platform.tianquan.jianshen.starter.field.PermissionFieldBindingGuard.class))).extendMessageConverters(converters);
+        assertFalse(originalMapper.getRegisteredModuleIds().contains("Rbac3FieldJacksonModule"));
+        org.junit.jupiter.api.Assertions.assertNotSame(originalMapper, converter.getObjectMapper());
         assertFalse(converter.getObjectMapper().isEnabled(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
         var message = new MockHttpInputMessage("{\"name\":\"Knowledge\",\"actorType\":\"USER\"}".getBytes(StandardCharsets.UTF_8));
         message.getHeaders().setContentType(MediaType.APPLICATION_JSON);

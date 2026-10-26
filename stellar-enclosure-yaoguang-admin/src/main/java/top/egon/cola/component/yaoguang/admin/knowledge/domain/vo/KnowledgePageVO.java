@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.vo;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -30,19 +36,43 @@ import java.util.List;
 public class KnowledgePageVO<T> {
 
     /** 当前页项目，空结果为空数组 / items of the current page, empty array when none. */
+    @PermissionResource(key = "yaoguang.field.KnowledgePageVO.items", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.items",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.ARRAY,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @NotNull
     private List<T> items;
 
     /** 页码，从 1 开始 / one-based page number. */
+    @PermissionResource(key = "yaoguang.field.KnowledgePageVO.page", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.page",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @Min(1)
     private int page;
 
     /** 有效页大小 1–100 / effective page size, 1–100. */
+    @PermissionResource(key = "yaoguang.field.KnowledgePageVO.size", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.size",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @Min(1)
     @Max(100)
     private int size;
 
     /** 本次查询匹配总数，非跨页快照 / matched total of this query, not a cross-page snapshot. */
+    @PermissionResource(key = "yaoguang.field.KnowledgePageVO.total", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.total",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            plainRead = @PermissionGroup(codes = "yuheng:knowledge:read"))
     @Min(0)
     private long total;
 

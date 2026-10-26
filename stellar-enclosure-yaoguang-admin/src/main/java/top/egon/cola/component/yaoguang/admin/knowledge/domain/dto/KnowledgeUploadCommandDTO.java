@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -32,25 +38,55 @@ public class KnowledgeUploadCommandDTO {
     /** 原始文件显示名，1–255，不作为路径 / original display file name, never a path. */
     @NotBlank
     @Size(max = 255)
+    @PermissionResource(key = "yaoguang.field.KnowledgeUploadCommandDTO.fileName", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.fileName",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:write"))
     private String fileName;
 
     /** 受支持媒体类型，不能仅信任客户端 Content-Type / validated media type. */
     @Size(max = 128)
+    @PermissionResource(key = "yaoguang.field.KnowledgeUploadCommandDTO.mediaType", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.mediaType",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:write"))
     private String mediaType;
 
     /** 原件字节，1–20971520 / original bytes, 1–20MiB. */
     @NotNull
     @Size(min = 1, max = 20_971_520)
+    @PermissionResource(key = "yaoguang.field.KnowledgeUploadCommandDTO.content", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.content",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:write"))
     private byte[] content;
 
     /** 更新已有资料时必填，须属于路径 kbId / set only when adding a revision to an existing document. */
     @Schema(nullable = true)
     @Pattern(regexp = "^[1-9][0-9]{0,19}$")
+    @PermissionResource(key = "yaoguang.field.KnowledgeUploadCommandDTO.documentId", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.documentId",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = "yuheng:knowledge:write"))
     private String documentId;
 
     /** 有 documentId 时必填且 ≥1，创建新资料时不传 / required with documentId, absent on creation. */
     @Schema(nullable = true)
     @Min(1)
+    @PermissionResource(key = "yaoguang.field.KnowledgeUploadCommandDTO.expectedRevision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.expectedRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = "yuheng:knowledge:write"))
     private Long expectedRevision;
 
     /**

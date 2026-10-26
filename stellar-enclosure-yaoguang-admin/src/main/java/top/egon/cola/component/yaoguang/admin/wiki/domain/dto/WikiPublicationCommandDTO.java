@@ -1,5 +1,11 @@
 package top.egon.cola.component.yaoguang.admin.wiki.domain.dto;
 
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.FieldPermissions;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionGroup;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,11 +32,23 @@ import lombok.experimental.Accessors;
 public class WikiPublicationCommandDTO {
 
     /** 待发布的草稿版本 ID / draft revision id to publish. */
+    @PermissionResource(key = "yaoguang.field.WikiPublicationCommandDTO.draftRevisionId", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.draftRevisionId",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.STRING,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @NotBlank
     @Pattern(regexp = "^[1-9][0-9]{0,19}$")
     private String draftRevisionId;
 
     /** 须等于页面当前 revision / must equal the current page revision. */
+    @PermissionResource(key = "yaoguang.field.WikiPublicationCommandDTO.expectedRevision", type = ResourceType.FIELD,
+            labelPage = "yaoguang.permissions", labelKey = "field.expectedRevision",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @FieldPermissions(valueType = PermissionManifest.JsonFieldType.NUMBER,
+            write = @PermissionGroup(codes = {"yuheng:knowledge:write"}))
     @NotNull
     @Min(0)
     private Long expectedRevision;

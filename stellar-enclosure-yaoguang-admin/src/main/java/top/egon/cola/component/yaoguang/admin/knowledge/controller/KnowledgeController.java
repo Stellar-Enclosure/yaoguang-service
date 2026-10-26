@@ -1,5 +1,19 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.controller;
 
+import top.egon.cola.component.yaoguang.admin.shared.converter.KnowledgePermissionProjectionConverter;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.dto.KnowledgeBaseCreateCommandDTO;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.dto.KnowledgeMembersReplaceCommandDTO;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeBaseCreatedVO;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeBaseManagedVO;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeMembersReadVO;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeMembersManagedVO;
+
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.RequiresPermissions;
+import top.egon.cola.component.yaoguang.admin.permission.YaoguangPermissionCodes;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -73,7 +87,7 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
 @Validated
 @RestController("knowledgeController")
 @RequestMapping("/api/v1/yuheng/admin")
-@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read','CAP_*'))")
+@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read'))")
 @Tag(name = "yaoguang-admin")
 @EgonApiCatalog(
         businessDomainCode = "xingyuan",
@@ -83,6 +97,8 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
         interfaceGroupCode = "yaoguang-admin")
 @RequiredArgsConstructor
 public class KnowledgeController {
+
+    private final KnowledgePermissionProjectionConverter permissionProjections;
 
     /** 知识库资源绝对路径前缀，仅用于拼装 201 的 {@code Location}，不猜测网关前缀 / the knowledge base absolute path prefix used only to build the 201 {@code Location} without guessing a gateway prefix. */
     private static final String KNOWLEDGE_BASE_PATH = "/api/v1/yuheng/admin/knowledge-bases/";
@@ -121,6 +137,11 @@ public class KnowledgeController {
     @Operation(operationId = "listKnowledgeBases")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledge.listKnowledgeBases", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.listKnowledgeBases",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases")
     public KnowledgePageVO<KnowledgeBaseVO> listKnowledgeBases(
             AdminActor actor,
@@ -160,22 +181,27 @@ public class KnowledgeController {
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL,
             idempotency = EgonGatewayPolicy.Idempotency.TRUE)
+    @PermissionResource(key = "yaoguang.api.knowledge.createKnowledgeBase", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.createKnowledgeBase",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PostMapping("/knowledge-bases")
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
-    public ResponseEntity<KnowledgeBaseVO> createKnowledgeBase(
-            @Valid @RequestBody KnowledgeBaseCommandDTO command,
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    public ResponseEntity<KnowledgeBaseCreatedVO> createKnowledgeBase(
+            @Valid @RequestBody KnowledgeBaseCreateCommandDTO command,
             AdminActor actor,
             @RequestHeader(value = "Idempotency-Key",
                     required = false) String idempotencyKey) {
         KnowledgeBaseVO view = knowledgeService.createBase(
                 actor,
-                command,
+                permissionProjections.baseCommand(command),
                 idempotencyKey
         );
         log.debug("YUHENG_KNOWLEDGE_BASE_CREATED kbId={} revision={}", view.getId(), view.getRevision());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .location(knowledgeBaseLocation(view.getId()))
-                .body(view);
+                .body(permissionProjections.createdBase(view));
     }
 
     /**
@@ -197,6 +223,11 @@ public class KnowledgeController {
     @Operation(operationId = "getKnowledgeBase")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledge.getKnowledgeBase", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.getKnowledgeBase",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}")
     public KnowledgeBaseVO getKnowledgeBase(
             @NotBlank
@@ -233,9 +264,14 @@ public class KnowledgeController {
     @Operation(operationId = "replaceKnowledgeBase")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledge.replaceKnowledgeBase", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.replaceKnowledgeBase",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.ADMIN)
     @PutMapping("/knowledge-bases/{kbId}")
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:admin') and (hasAnyAuthority('CAP_yuheng:knowledge:admin','CAP_*'))")
-    public KnowledgeBaseVO replaceKnowledgeBase(
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:admin') and (hasAnyAuthority('CAP_yuheng:knowledge:admin'))")
+    public KnowledgeBaseManagedVO replaceKnowledgeBase(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
             @PathVariable String kbId,
@@ -248,7 +284,7 @@ public class KnowledgeController {
                 command
         );
         log.debug("YUHENG_KNOWLEDGE_BASE_REPLACED kbId={} revision={}", kbId, view.getRevision());
-        return view;
+        return permissionProjections.managedBase(view);
     }
 
     /**
@@ -265,13 +301,18 @@ public class KnowledgeController {
     @Operation(operationId = "listKnowledgeMembers")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledge.listKnowledgeMembers", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.listKnowledgeMembers",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/members")
-    public KnowledgeMembersVO listKnowledgeMembers(
+    public KnowledgeMembersReadVO listKnowledgeMembers(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
             @PathVariable String kbId,
             AdminActor actor) {
-        return knowledgeMembersConverter.toTarget(knowledgeService.listMembers(actor, kbId));
+        return permissionProjections.readMembers(knowledgeMembersConverter.toTarget(knowledgeService.listMembers(actor, kbId)));
     }
 
     /**
@@ -296,18 +337,23 @@ public class KnowledgeController {
     @Operation(operationId = "replaceKnowledgeMembers")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledge.replaceKnowledgeMembers", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.replaceKnowledgeMembers",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:admin")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.ADMIN)
     @PutMapping("/knowledge-bases/{kbId}/members")
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:admin') and (hasAnyAuthority('CAP_yuheng:knowledge:admin','CAP_*'))")
-    public KnowledgeMembersVO replaceKnowledgeMembers(
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:admin') and (hasAnyAuthority('CAP_yuheng:knowledge:admin'))")
+    public KnowledgeMembersManagedVO replaceKnowledgeMembers(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
             @PathVariable String kbId,
-            @Valid @RequestBody KnowledgeMembersCommandDTO command,
+            @Valid @RequestBody KnowledgeMembersReplaceCommandDTO command,
             AdminActor actor) {
         KnowledgeMembersVO view = knowledgeMembersConverter.toTarget(
-                knowledgeService.replaceMembers(actor, kbId, command));
+                knowledgeService.replaceMembers(actor, kbId, permissionProjections.membersCommand(command)));
         log.debug("YUHENG_KNOWLEDGE_MEMBERS_REPLACED kbId={} revision={}", kbId, view.getRevision());
-        return view;
+        return permissionProjections.managedMembers(view);
     }
 
     /**
@@ -333,6 +379,11 @@ public class KnowledgeController {
     @Operation(operationId = "createKnowledgeAnswer")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledge.createKnowledgeAnswer", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledge.createKnowledgeAnswer",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @PostMapping("/knowledge-bases/{kbId}/answers")
     public KnowledgeAnswerVO createKnowledgeAnswer(
             @NotBlank

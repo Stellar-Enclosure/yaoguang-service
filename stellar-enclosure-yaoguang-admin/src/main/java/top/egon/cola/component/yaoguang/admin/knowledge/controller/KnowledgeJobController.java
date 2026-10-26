@@ -1,5 +1,14 @@
 package top.egon.cola.component.yaoguang.admin.knowledge.controller;
 
+import top.egon.cola.component.yaoguang.admin.shared.converter.KnowledgePermissionProjectionConverter;
+import top.egon.cola.component.yaoguang.admin.knowledge.domain.vo.KnowledgeJobWrittenVO;
+
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.PermissionManifest;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.ResourceType;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.PermissionResource;
+import top.egon.cola.platform.tianquan.jianshen.contract.permission.annotation.RequiresPermissions;
+import top.egon.cola.component.yaoguang.admin.permission.YaoguangPermissionCodes;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -68,7 +77,7 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
 @Validated
 @RestController("knowledgeJobController")
 @RequestMapping("/api/v1/yuheng/admin")
-@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read','CAP_*'))")
+@PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:read') and (hasAnyAuthority('CAP_yuheng:knowledge:read'))")
 @Tag(name = "yaoguang-admin")
 @EgonApiCatalog(
         businessDomainCode = "xingyuan",
@@ -78,6 +87,8 @@ import top.egon.cola.component.yuheng.openapi.annotation.EgonGatewayPolicy;
         interfaceGroupCode = "yaoguang-admin")
 @RequiredArgsConstructor
 public class KnowledgeJobController {
+
+    private final KnowledgePermissionProjectionConverter permissionProjections;
 
     /** 作业轮询绝对路径前缀，仅用于 202 的 {@code Location}，与 API-019 的映射保持一致 / the job polling path prefix used only for the 202 {@code Location}, aligned with the API-019 mapping. */
     private static final String KNOWLEDGE_JOB_PATH = "/api/v1/yuheng/admin/knowledge-jobs/";
@@ -117,6 +128,11 @@ public class KnowledgeJobController {
     @Operation(operationId = "getKnowledgeJob")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledgeJob.getKnowledgeJob", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeJob.getKnowledgeJob",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-jobs/{jobId}")
     public KnowledgeJobVO getKnowledgeJob(
             @NotBlank
@@ -152,6 +168,11 @@ public class KnowledgeJobController {
     @Operation(operationId = "listKnowledgeJobs")
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL)
+    @PermissionResource(key = "yaoguang.api.knowledgeJob.listKnowledgeJobs", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeJob.listKnowledgeJobs",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:read")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.READ)
     @GetMapping("/knowledge-bases/{kbId}/jobs")
     public KnowledgePageVO<KnowledgeJobVO> listKnowledgeJobs(
             @NotBlank
@@ -199,9 +220,14 @@ public class KnowledgeJobController {
     @EgonGatewayPolicy(
             exposure = EgonGatewayPolicy.Exposure.EXTERNAL,
             idempotency = EgonGatewayPolicy.Idempotency.TRUE)
+    @PermissionResource(key = "yaoguang.api.knowledgeJob.retryKnowledgeJob", type = ResourceType.API,
+            labelPage = "yaoguang.permissions", labelKey = "api.knowledgeJob.retryKnowledgeJob",
+            allowedPrincipals = {PermissionManifest.PrincipalType.USER, PermissionManifest.PrincipalType.SERVICE},
+            oauthScopes = "yuheng:knowledge:write")
+    @RequiresPermissions(codes = YaoguangPermissionCodes.WRITE)
     @PostMapping("/knowledge-jobs/{jobId}/retries")
-    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write','CAP_*'))")
-    public ResponseEntity<KnowledgeJobVO> retryKnowledgeJob(
+    @PreAuthorize("hasAuthority('SCOPE_yuheng:knowledge:write') and (hasAnyAuthority('CAP_yuheng:knowledge:write'))")
+    public ResponseEntity<KnowledgeJobWrittenVO> retryKnowledgeJob(
             @NotBlank
             @Pattern(regexp = "^[1-9][0-9]{0,19}$")
             @PathVariable String jobId,
@@ -221,7 +247,7 @@ public class KnowledgeJobController {
                 view.getType(),
                 view.getStatus()
         );
-        return accepted(view.getId(), view);
+        return accepted(view.getId(), permissionProjections.writtenJob(view));
     }
 
     /**
